@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <stdlib.h> // malloc, free 동적 할당 함수 사용을 위한 헤더
+#include <string.h> // strcmp 함수 사용을 위한 헤더
+
+// 물품 이름과 금액을 저장할 구조체 정의
+typedef struct {
+    char name[50]; // 물품 이름
+    int price;     // 물품 금액
+} Item;
+
+int main() {
+    int n;
+    
+    // 1. 입력받을 물품의 총 개수 N 입력 및 검증
+    if (scanf("%d", &n) != 1 || n <= 0) {
+        printf("올바른 물품 개수를 입력해주세요.\n");
+        return 1;
+    }
+
+    // 2. 요구사항 반영: 메모리를 최소한으로 사용하기 위해 N개만큼 동적 할당
+    Item* items = (Item*)malloc(sizeof(Item) * n);
+    if (items == NULL) { // 메모리 공간이 부족할 때 예외 처리
+        printf("메모리 할당 실패\n");
+        return 1;
+    }
+
+    // 3. N개의 물품 이름과 금액을 차례대로 입력 받기
+    for (int i = 0; i < n; i++) {
+        if (scanf("%s %d", items[i].name, &items[i].price) != 2) {
+            printf("물품 정보 입력이 올바르지 않습니다.\n");
+            free(items); // 에러 발생 시 메모리 누수 방지를 위해 해제
+            return 1;
+        }
+    }
+
+    // 4. 마지막으로 검색(조회)할 물품의 이름 입력 받기
+    char target[50];
+    if (scanf("%s", target) != 1) {
+        printf("검색할 물품 이름이 올바르지 않습니다.\n");
+        free(items);
+        return 1;
+    }
+
+    // 5. 배열을 순회하며 검색어(target)와 일치하는 물품의 금액을 합산
+    int total = 0; // 금액 합계를 저장할 변수
+    for (int i = 0; i < n; i++) {
+        // strcmp 결과가 0이면 두 문자열이 완벽히 일치함을 의미
+        if (strcmp(items[i].name, target) == 0) {
+            total += items[i].price; // 금액 누적
+        }
+    }
+
+    // 6. 결과 출력 (일치하는 이름이 없었다면 0이 출력됨)
+    printf("%d\n", total);
+
+    // 7. 할당받았던 동적 메모리 해제
+    free(items);
+    return 0;
+}
