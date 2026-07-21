@@ -1,0 +1,96 @@
+#include <stdio.h>
+
+// 날짜 정보를 저장하는 구조체
+typedef struct {
+    int year;
+    int month;
+    int day;
+} Date;
+
+// 시간 정보를 저장하는 구조체
+typedef struct {
+    int hour;
+    int minute;
+    int second;
+} Time;
+
+// 날짜와 시간 구조체를 멤버로 포함하는 '중첩 구조체' 정의
+typedef struct {
+    Date date; // 내포된 Date 구조체
+    Time time; // 내포된 Time 구조체
+} DateTime;
+
+// 각 월의 일 수 배열 (계산 편의성을 위해 0번 인덱스는 비워둠)
+// ※ 과제 출제의 단순 계산 예시 기준에 맞추어 윤년은 제외한 평년 기준으로 작성되었습니다.
+const int days_in_month[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+// 임의의 기준점(1년 1월 1일 00:00:00)으로부터 흘러간 '총 초(second)'를 계산하는 함수
+// 큰 값을 다루어야 하므로 long long 자료형을 사용합니다.
+long long to_total_seconds(DateTime dt) {
+    long long days = 0;
+
+    // 1. 지나간 연도들에 대한 일 수 누적 (1년부터 해당 연도 전까지)
+    for (int y = 1; y < dt.date.year; y++) {
+        days += 365;
+    }
+
+    // 2. 해당 연도의 지나간 월들에 대한 일 수 누적 (1월부터 해당 월 전까지)
+    for (int m = 1; m < dt.date.month; m++) {
+        days += days_in_month[m];
+    }
+
+    // 3. 해당 월의 지나간 일 수 누적 (시작일이 1일이므로 현재 일에서 1을 뺌)
+    days += (dt.date.day - 1);
+
+    // 4. 누적된 총 일 수를 초로 변환 (하루 = 24시간 * 60분 * 60초 = 86400초)
+    // 86400LL에서 LL은 큰 정수형 상수 연산을 명시합니다.
+    long long total_sec = days * 86400LL;
+    
+    // 5. 시, 분, 초 단위까지 모두 초로 환산하여 더하기
+    total_sec += dt.time.hour * 3600;   // 1시간 = 3600초
+    total_sec += dt.time.minute * 60;   // 1분 = 60초
+    total_sec += dt.time.second;        // 초 단위 그대로 합산
+
+    return total_sec;
+}
+
+int main() {
+    DateTime dt1, dt2;
+
+    // 첫 번째 날짜와 시각 입력 및 서식 검증
+    if (scanf("%d %d %d %d %d %d", 
+              &dt1.date.year, &dt1.date.month, &dt1.date.day, 
+              &dt1.time.hour, &dt1.time.minute, &dt1.time.second) != 6) {
+        printf("첫 번째 입력 형식이 잘못되었습니다.\n");
+        return 1;
+    }
+
+    // 두 번째 날짜와 시각 입력 및 서식 검증
+    if (scanf("%d %d %d %d %d %d", 
+              &dt2.date.year, &dt2.date.month, &dt2.date.day, 
+              &dt2.time.hour, &dt2.time.minute, &dt2.time.second) != 6) {
+        printf("두 번째 입력 형식이 잘못되었습니다.\n");
+        return 1;
+    }
+
+    // 두 날짜 시각을 각각 총 초 단위로 환산
+    long long sec1 = to_total_seconds(dt1);
+    long long sec2 = to_total_seconds(dt2);
+
+    // 두 시간의 차이(절대값) 계산
+    long long diff = sec2 - sec1;
+    if (diff < 0) {
+        diff = -diff; // 시간차가 음수일 경우 양수로 반전
+    }
+
+    // 차이 값을 다시 시간, 분, 초 단위로 역환산
+    long long hours = diff / 3600;   // 총 초에서 3600을 나눈 몫이 '시'가 됨
+    diff %= 3600;                    // 남은 초
+    long long minutes = diff / 60;   // 남은 초에서 60을 나눈 몫이 '분'이 됨
+    long long seconds = diff % 60;   // 최종적으로 남은 값이 '초'가 됨
+
+    // 결과 예시 서식("4057시 44분 40초")대로 출력
+    printf("%lld시 %lld분 %lld초\n", hours, minutes, seconds);
+
+    return 0;
+}
